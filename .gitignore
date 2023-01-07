@@ -1,0 +1,7 @@
+.vscode*
+.DS_Store
+*.log
+*.pot
+*.pyc
+macnamer*.pkg
+Python.framework
