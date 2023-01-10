@@ -1,6 +1,8 @@
 #!/usr/local/macnamer/namer-python
 
-## Copyright 2014 Graham Gilbert
+## Copyright 2022 Niels Højen
+## Modified from Graham Gilberts original version (https://github.com/grahamgilbert/macnamer)
+##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ## you may not use this file except in compliance with the License.
 ## You may obtain a copy of the License at
@@ -13,18 +15,11 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 
-## Modified by Niels Højen for python3
-
 import subprocess
-import platform
 import requests
 import json
 import os, sys
 import re
-import string
-import shlex
-import shutil
-import math
 from Foundation import *
 
 ###############################################################################
@@ -36,14 +31,11 @@ BUNDLE_ID = 'com.nielshojen.macnamer'
 def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
-##This was lifted verbatim from the Munki project - hope Greg doesn't mind!
 
 def set_pref(pref_name, pref_value):
     """Sets a preference, writing it to
-        /Library/Preferences/com.nielshojen.macnamer.plist.
-        This should normally be used only for 'bookkeeping' values;
-        values that control the behavior of munki may be overridden
-        elsewhere (by MCX, for example)"""
+        /Library/Preferences/<BUNDLE_ID>.plist.
+    """
     try:
         CFPreferencesSetValue(
                               pref_name, pref_value, BUNDLE_ID,
@@ -56,8 +48,8 @@ def pref(pref_name):
     """Return a preference. Since this uses CFPreferencesCopyAppValue,
     Preferences can be defined several places. Precedence is:
         - MCX
-        - /var/root/Library/Preferences/ManagedInstalls.plist
-        - /Library/Preferences/ManagedInstalls.plist
+        - /var/root/Library/Preferences/<BUNDLE_ID>.plist
+        - /Library/Preferences/<BUNDLE_ID>.plist
         - default_prefs defined here.
     """
     default_prefs = {
@@ -123,6 +115,7 @@ else:
     data = json.loads(data)
     name = data['name']
     prefix = data['prefix']
+    devider = data['devider']
     domain = data['domain']
     length = data['length']
 
@@ -133,7 +126,7 @@ else:
         oldname = oldname.strip().decode("UTF-8")
         if prefix:
             name = name.zfill(length)
-            newname = prefix+' '+name
+            newname = prefix+devider+name
         else:
             newname = name
         if prefix:
@@ -144,7 +137,7 @@ else:
         ## if there's a prefix, add that to the name
         ## set the local hostname
         if prefix:
-            localname = prefix.replace(' ', '-') + name.replace(' ', '-')
+            localname = prefix.replace(' ', '-') + devider.replace(' ', '-') + name.replace(' ', '-')
         else:
             localname = name.replace(' ', '-')
         theprocess = "scutil --get LocalHostName"
@@ -158,11 +151,12 @@ else:
 
         ## set the bonjour name
         if prefix:
-            desiredname = prefix + name
+            desiredname = prefix + devider + name
         else:
             desiredname = name
         theprocess = "scutil --get ComputerName"
         oldname = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
+
         if oldname != desiredname:
             theprocess = "scutil --set ComputerName" + " \"" +desiredname + "\""
             p = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
@@ -174,10 +168,11 @@ else:
             newname = localname+".local"
         theprocess = "scutil --get HostName"
         oldhostname = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0].strip()
+
         if oldhostname == newname:
             print("Hostname is the same, no need to change")
         else:
-            theprocess = "scutil --set HostName" + " " +newname
+            theprocess = "scutil --set HostName" + " " +newname.lower()
             p = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
 
         ## if a domain is set, set the cli hostname
@@ -187,11 +182,9 @@ else:
             newname = localname+".local"
         theprocess = "hostname"
         oldhostname = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0].strip()
+
         if oldhostname == newname:
             print("Hostname is the same, no need to change")
         else:
-            theprocess = "hostname" + " " +newname
+            theprocess = "hostname" + " " +newname.lower()
             p = subprocess.Popen(theprocess,shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE).communicate()[0]
-
-        # we're done, touch the complete file for AD bind
-        touch('/Users/Shared/.named')

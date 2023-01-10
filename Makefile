@@ -1,11 +1,11 @@
 USE_PKGBUILD=1
 include /usr/local/share/luggage/luggage.make
-PB_EXTRA_ARGS+= --sign "[name of your installer dev cert]"
+PB_EXTRA_ARGS+= --sign "Developer ID Installer: [COMPANY NAME] ([IDENTIFIER])"
 TITLE=macnamer
 REVERSE_DOMAIN=com.nielshojen
-PACKAGE_VERSION=1.4
+PACKAGE_VERSION=2.0
 PYTHONTOOLDIR=/tmp/relocatable-python-git
-DEV_APP_CERT="[name of your app dev cert]"
+DEV_APP_CERT="Developer ID Application: [COMPANY NAME] ([IDENTIFIER])"
 
 PAYLOAD=\
 	pack-script \
