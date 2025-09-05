@@ -98,7 +98,10 @@ key = pref('Key')
 mydata=[('serial',serial),('ip',ip),('key',key)]
 
 try:
-    response = requests.post(theurl, data = mydata)
+    headers = {
+        "User-Agent": "macnamer/2.2.0"
+    }
+    response = requests.post(theurl, data = mydata, headers=headers)
 except URLError as e:
     if hasattr(e, 'reason'):
         print('We failed to reach a server.')
@@ -115,7 +118,7 @@ else:
     data = json.loads(data)
     name = data['name']
     prefix = data['prefix']
-    devider = data['devider']
+    divider = data['divider']
     domain = data['domain']
     length = data['length']
 
@@ -126,7 +129,7 @@ else:
         oldname = oldname.strip().decode("UTF-8")
         if prefix:
             name = name.zfill(length)
-            newname = prefix+devider+name
+            newname = prefix+divider+name
         else:
             newname = name
         if prefix:
@@ -137,7 +140,7 @@ else:
         ## if there's a prefix, add that to the name
         ## set the local hostname
         if prefix:
-            localname = prefix.replace(' ', '-') + devider.replace(' ', '-') + name.replace(' ', '-')
+            localname = prefix.replace(' ', '-') + divider.replace(' ', '-') + name.replace(' ', '-')
         else:
             localname = name.replace(' ', '-')
         theprocess = "scutil --get LocalHostName"
@@ -151,7 +154,7 @@ else:
 
         ## set the bonjour name
         if prefix:
-            desiredname = prefix + devider + name
+            desiredname = prefix + divider + name
         else:
             desiredname = name
         theprocess = "scutil --get ComputerName"
